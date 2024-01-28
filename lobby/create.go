@@ -8,6 +8,7 @@ import (
 )
 
 var Lobbies []models.Lobby
+var Slots [10]bool
 
 func LobbyCreate(bot *tgbotapi.BotAPI, chatID int64, level int, userID int, username string) models.Lobby {
 	var lobby models.Lobby
@@ -26,6 +27,15 @@ func LobbyCreate(bot *tgbotapi.BotAPI, chatID int64, level int, userID int, user
 	player.ChatID = chatID
 	player.Username = username
 	lobby.Players = append(lobby.Players, player)
-	Lobbies = append(Lobbies, lobby)
+	Lobbies[findSlot()] = lobby
 	return lobby
+}
+func findSlot() int {
+	for i, slot := range Slots {
+		if !slot {
+			Slots[i] = true
+			return i
+		}
+	}
+	return -1
 }

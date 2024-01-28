@@ -1,6 +1,7 @@
 package game
 
 import (
+	"Buckshot_Roulette/lobby"
 	"Buckshot_Roulette/models"
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
@@ -9,6 +10,15 @@ import (
 	"time"
 )
 
+func checkPlayers(lb models.Lobby, done chan struct{}) {
+	for {
+		time.Sleep(1 * time.Minute) // Check every minute
+		if lobby.Find(lb) == -1 {
+
+		}
+
+	}
+}
 func (g *Game) sendMessageToAll(bot *tgbotapi.BotAPI, allmessage []models.Player, message string) {
 	for _, pc := range allmessage {
 		replyMessage := tgbotapi.NewMessage(pc.ChatID, message)

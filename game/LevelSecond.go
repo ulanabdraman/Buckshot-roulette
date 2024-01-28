@@ -9,6 +9,8 @@ import (
 )
 
 func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh chan GameMessage) {
+	done := make(chan struct{})
+	go checkPlayers(lobby, done)
 	player1 := lobby.Players[0].Username
 	player2 := lobby.Players[1].Username
 	message1 := lobby.Players[0].ChatID

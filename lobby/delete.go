@@ -28,6 +28,7 @@ func DeletePlayerFromLobby(bot *tgbotapi.BotAPI, lobby models.Lobby, chatID int6
 
 			if len(Lobbies[i].Players) == 0 {
 				Lobbies = append(Lobbies[:i], Lobbies[i+1:]...)
+				Slots[i] = false
 			}
 			break
 		}

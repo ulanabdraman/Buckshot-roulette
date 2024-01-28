@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
 	//"database/sql"
 	//"fmt"
 	"Buckshot_Roulette/lobby"
@@ -35,6 +34,8 @@ func removeKeyboard(bot *tgbotapi.BotAPI, chatID int64, message string) {
 	bot.Send(msg)
 }
 
+var userStates = make(map[int]UserState)
+
 func main() {
 	bot, err := tgbotapi.NewBotAPI("6422826842:AAGz359zrP2w3N8KvmB9dhYdFPSMeDz5V7I")
 	if err != nil {
@@ -45,14 +46,13 @@ func main() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	userStates := make(map[int]UserState)
-
 	playerLobby := make(map[int]models.Lobby)
 
 	messageCh := make([]chan game.GameMessage, 10)
 	for i := 0; i < 10; i++ {
 		messageCh[i] = make(chan game.GameMessage)
 	}
+	//var lastActivity []time.Time
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
