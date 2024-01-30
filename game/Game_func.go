@@ -1,7 +1,6 @@
 package game
 
 import (
-	"Buckshot_Roulette/lobby"
 	"Buckshot_Roulette/models"
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
@@ -10,15 +9,6 @@ import (
 	"time"
 )
 
-func checkPlayers(lb models.Lobby, done chan struct{}) {
-	for {
-		time.Sleep(1 * time.Minute) // Check every minute
-		if lobby.Find(lb) == -1 {
-
-		}
-
-	}
-}
 func (g *Game) sendMessageToAll(bot *tgbotapi.BotAPI, allmessage []models.Player, message string) {
 	for _, pc := range allmessage {
 		replyMessage := tgbotapi.NewMessage(pc.ChatID, message)
@@ -89,6 +79,11 @@ func (g *Game) choice(bot *tgbotapi.BotAPI, chatID int64, messageCh chan GameMes
 	for {
 		select {
 		case chat := <-messageCh:
+			if chat.Message == "/endgame" {
+				fmt.Println("Игра закончена")
+
+				return true
+			}
 			if chat.ChatID == chatID {
 				fmt.Printf("Получено сообщение из канала: %s\n", chat.Message)
 
@@ -127,6 +122,7 @@ func (g *Game) choice(bot *tgbotapi.BotAPI, chatID int64, messageCh chan GameMes
 							}
 						}
 					}
+					g.drop()
 				}
 				if chat.Message == "В противника" {
 					message := fmt.Sprintf("Ваш противник направил дробовик в вас")
@@ -162,14 +158,11 @@ func (g *Game) choice(bot *tgbotapi.BotAPI, chatID int64, messageCh chan GameMes
 							}
 						}
 					}
+					g.drop()
 				}
-				if len(g.BulletsOrder) > 1 {
-					g.BulletsOrder = g.BulletsOrder[1:]
-					fmt.Println("Первый патрон удален")
-				} else {
-					clear := make([]string, 0)
-					g.BulletsOrder = clear
-					fmt.Println("Срез пуст, удаление невозможно")
+				if chat.Message == "Показать стол" {
+					g.showTable(bot, chatID)
+					continue
 				}
 				return false
 			}
@@ -211,7 +204,11 @@ func (g *Game) choiceItems(bot *tgbotapi.BotAPI, chatID int64, messageCh chan Ga
 	for {
 		select {
 		case chat := <-messageCh:
+			if chat.Message == "/endgame" {
+				fmt.Println("Игра закончена")
 
+				return true
+			}
 			if chat.ChatID == chatID {
 				fmt.Printf("Получено сообщение из канала: %s\n", chat.Message)
 

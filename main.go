@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
+
+	//"time"
 	//"database/sql"
 	//"fmt"
 	"Buckshot_Roulette/lobby"
@@ -13,16 +16,6 @@ import (
 	"log"
 	//"strconv"
 	//"strings"
-)
-
-type UserState int
-
-const (
-	Idle UserState = iota
-	InLobby
-	GivingLevel
-	GivingCode
-	InGame
 )
 
 var levels = []int{1, 2, 3}
@@ -34,7 +27,9 @@ func removeKeyboard(bot *tgbotapi.BotAPI, chatID int64, message string) {
 	bot.Send(msg)
 }
 
-var userStates = make(map[int]UserState)
+var UserStates = make(map[int]models.UserState)
+var playerLobby = make(map[int]models.Lobby)
+var messageCh = make([]chan game.GameMessage, 10)
 
 func main() {
 	bot, err := tgbotapi.NewBotAPI("6422826842:AAGz359zrP2w3N8KvmB9dhYdFPSMeDz5V7I")
@@ -46,14 +41,12 @@ func main() {
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	playerLobby := make(map[int]models.Lobby)
-
-	messageCh := make([]chan game.GameMessage, 10)
 	for i := 0; i < 10; i++ {
 		messageCh[i] = make(chan game.GameMessage)
 	}
-	//var lastActivity []time.Time
 
+	messageAFK := make(chan models.UserInfo)
+	go AfkChecker(bot, messageAFK)
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
@@ -73,7 +66,7 @@ func main() {
 		//firstName := update.Message.From.FirstName
 		//lastName := update.Message.From.LastName
 		messageText := update.Message.Text
-		currentState := userStates[userID]
+		currentState := UserStates[userID]
 		if update.Message == nil {
 			continue
 		}
@@ -90,7 +83,7 @@ func main() {
 			replyMessage := tgbotapi.NewMessage(chatID, message)
 			bot.Send(replyMessage)
 		}
-		if currentState == Idle {
+		if currentState == models.Idle {
 			if messageText == "/start" {
 				message := fmt.Sprintf("Вы в меню %s: \n Вы можете создать лобби '/createlobby' \n Вы можете присоединиться к лобби '/joinlobby' \n Вы можете выйти с лобби '/leavelobby'", username)
 
@@ -115,9 +108,9 @@ func main() {
 
 				msg := tgbotapi.NewMessage(chatID, "Выберите сложность:")
 				msg.ReplyMarkup = replyKeyboard
-
 				bot.Send(msg)
-				userStates[userID] = GivingLevel
+
+				UserStates[userID] = models.GivingLevel
 			}
 			if messageText == "/joinlobby" {
 				msg := fmt.Sprintf("Отправьте код лобби \nЕсли хотите вернуться введите '/back'")
@@ -130,7 +123,7 @@ func main() {
 
 				replyMessage.ReplyMarkup = keyboard
 				bot.Send(replyMessage)
-				userStates[userID] = GivingCode
+				UserStates[userID] = models.GivingCode
 			}
 			if messageText == "/leavelobby" {
 				message := fmt.Sprintf("Вы не в лобби")
@@ -146,7 +139,7 @@ func main() {
 				bot.Send(msg)
 			}
 		}
-		if currentState == InLobby {
+		if currentState == models.InLobby {
 			if strings.HasPrefix(messageText, "/createlobby") {
 				message := fmt.Sprintf("Вы уже в лобби")
 				replyMessage := tgbotapi.NewMessage(chatID, message)
@@ -158,8 +151,8 @@ func main() {
 				bot.Send(replyMessage)
 			}
 			if messageText == "/leavelobby" {
-				userStates[userID] = Idle
-				lobby.DeletePlayerFromLobby(bot, playerLobby[userID], chatID)
+				UserStates[userID] = models.Idle
+				lobby.DeletePlayerFromLobby(bot, playerLobby[userID], chatID, messageCh[lobby.Find(playerLobby[userID])])
 				message := fmt.Sprintf("Вы покинули лобби")
 				replyMessage := tgbotapi.NewMessage(chatID, message)
 				bot.Send(replyMessage)
@@ -169,14 +162,14 @@ func main() {
 				//log.Println(i)
 				if a {
 					playerLobby[userID] = lb
-					userStates[userID] = InGame
-					userStates[lb.Players[1].UserID] = InGame
+					UserStates[userID] = models.InGame
+					UserStates[lb.Players[1].UserID] = models.InGame
 					var g game.Game
 					if lb.Level == 1 {
 						go g.LevelFirst(bot, playerLobby[userID], messageCh[i])
 					}
 					if lb.Level == 2 {
-						go g.LevelSecond(bot, playerLobby[userID], messageCh[i])
+						go g.LevelSecond(bot, playerLobby[userID], messageCh[i], &UserStates)
 					}
 					if lb.Level == 3 {
 
@@ -184,13 +177,13 @@ func main() {
 				}
 			}
 		}
-		if currentState == GivingLevel {
+		if currentState == models.GivingLevel {
 			level, err := strconv.Atoi(messageText)
 			if err != nil {
 			}
 			if level == 1 || level == 2 || level == 3 {
 				lb := lobby.LobbyCreate(bot, chatID, level, userID, username)
-				userStates[userID] = InLobby
+				UserStates[userID] = models.InLobby
 				message := fmt.Sprintf("Лобби создано \nКод: %s \nСложность:%d \nЧтобы начать игру введите '/startgame'", lb.Code, lb.Level)
 				removeKeyboard(bot, chatID, message)
 				playerLobby[userID] = lb
@@ -201,9 +194,9 @@ func main() {
 			}
 
 		}
-		if currentState == GivingCode {
+		if currentState == models.GivingCode {
 			if messageText == "/back" {
-				userStates[userID] = Idle
+				UserStates[userID] = models.Idle
 				message := fmt.Sprintf("Вы в меню %s: \n Вы можете создать лобби '/createlobby' \n Вы можете присоединиться к лобби '/joinlobby' \n Вы можете выйти с лобби '/leavelobby'", username)
 
 				var replyButtons []tgbotapi.KeyboardButton
@@ -220,7 +213,7 @@ func main() {
 			} else {
 				a, lb := lobby.JoinLobby(chatID, bot, messageText, userID, username)
 				if a {
-					userStates[userID] = InLobby
+					UserStates[userID] = models.InLobby
 					message := fmt.Sprintf("Успешное подключение к %s", messageText)
 					replyMessage := tgbotapi.NewMessage(chatID, message)
 					bot.Send(replyMessage)
@@ -228,22 +221,23 @@ func main() {
 				}
 			}
 		}
-		if currentState == InGame {
+		if currentState == models.InGame {
 			if messageText == "/leavelobby" {
-				userStates[userID] = Idle
-				lobby.DeletePlayerFromLobby(bot, playerLobby[userID], chatID)
+				fmt.Println("Покидаем лобби...")
+				UserStates[userID] = models.Idle
+				lobby.DeletePlayerFromLobby(bot, playerLobby[userID], chatID, messageCh[lobby.Find(playerLobby[userID])])
 				message := fmt.Sprintf("Вы покинули лобби")
 				replyMessage := tgbotapi.NewMessage(chatID, message)
 				bot.Send(replyMessage)
-
 			} else {
-				fmt.Println("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n")
+				fmt.Println("Отправляем сообщение в игру...")
 				var message game.GameMessage
 				message.Message = messageText
 				message.ChatID = chatID
 				messageCh[lobby.Find(playerLobby[userID])] <- message
 			}
 		}
+
 		if messageText == "/showlobbies" {
 			var message string
 			var lb models.Lobby
@@ -258,5 +252,10 @@ func main() {
 			replyMessage := tgbotapi.NewMessage(chatID, fmt.Sprintf("Текущее состояние: %v", currentState))
 			bot.Send(replyMessage)
 		}
+		var userMsg models.UserInfo
+		userMsg.LastActivity = time.Now()
+		userMsg.UserID = userID
+		userMsg.ChatID = chatID
+		messageAFK <- userMsg
 	}
 }

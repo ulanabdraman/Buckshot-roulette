@@ -8,9 +8,7 @@ import (
 	"time"
 )
 
-func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh chan GameMessage) {
-	done := make(chan struct{})
-	go checkPlayers(lobby, done)
+func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh chan GameMessage, userStates *map[int]models.UserState) {
 	player1 := lobby.Players[0].Username
 	player2 := lobby.Players[1].Username
 	message1 := lobby.Players[0].ChatID
@@ -69,6 +67,8 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh c
 				g.sendMessageToAll(bot, allmessage, message)
 				end := g.choiceItems(bot, message2, messageCh, message1, allmessage)
 				if end {
+					(*userStates)[lobby.Players[0].UserID] = models.InLobby
+					(*userStates)[lobby.Players[1].UserID] = models.InLobby
 					return
 				}
 				if len(g.BulletsOrder) == 0 {
@@ -89,6 +89,8 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh c
 				g.sendMessageToAll(bot, allmessage, message)
 				end := g.choiceItems(bot, message1, messageCh, message2, allmessage)
 				if end {
+					(*userStates)[lobby.Players[0].UserID] = models.InLobby
+					(*userStates)[lobby.Players[1].UserID] = models.InLobby
 					return
 				}
 				if len(g.BulletsOrder) == 0 {

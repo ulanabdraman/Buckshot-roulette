@@ -10,7 +10,7 @@ func StartGame(bot *tgbotapi.BotAPI, lobby models.Lobby, chatID int64) (bool, mo
 	for i, lb := range Lobbies {
 		if lb.Code == lobby.Code {
 			if lb.Players[0].ChatID == chatID {
-				if len(lb.Players) < 2 {
+				if len(lb.Players) != 2 {
 					message := fmt.Sprintf("Недостаточно игроков")
 					replyMessage := tgbotapi.NewMessage(chatID, message)
 					bot.Send(replyMessage)
@@ -18,6 +18,7 @@ func StartGame(bot *tgbotapi.BotAPI, lobby models.Lobby, chatID int64) (bool, mo
 					message := fmt.Sprintf("Все условия для начала игры выполнены")
 					replyMessage := tgbotapi.NewMessage(chatID, message)
 					bot.Send(replyMessage)
+					Lobbies[i].Game = true
 					return true, lb, i
 				}
 
@@ -33,8 +34,8 @@ func StartGame(bot *tgbotapi.BotAPI, lobby models.Lobby, chatID int64) (bool, mo
 	return false, l, 0
 }
 func Find(lobby models.Lobby) int {
-	for i, lb := range Lobbies {
-		if lb.Code == lobby.Code {
+	for i, _ := range Lobbies {
+		if Lobbies[i].Code == lobby.Code {
 			return i
 		}
 	}
