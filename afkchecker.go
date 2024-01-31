@@ -32,14 +32,14 @@ func every1minute(bot *tgbotapi.BotAPI) {
 		time.Sleep(1 * time.Minute)
 		for i := len(usersActivity) - 1; i >= 0; i-- {
 			user := usersActivity[i]
-			if time.Since(user.LastActivity) > 1*time.Minute {
-				UserStates[user.UserID] = models.Idle
+			if time.Since(user.LastActivity) > 5*time.Minute {
 				usersActivity = append(usersActivity[:i], usersActivity[i+1:]...)
 				index := lobby.Find(playerLobby[user.UserID])
 				if index != -1 {
 					fmt.Println("Удалили игрока")
 					lobby.DeletePlayerFromLobby(bot, playerLobby[user.UserID], user.ChatID, messageCh[lobby.Find(playerLobby[user.UserID])])
 				}
+				UserStates[user.UserID] = models.Idle
 			}
 		}
 	}

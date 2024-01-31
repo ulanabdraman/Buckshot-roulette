@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-func (g *Game) LevelFirst(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh chan GameMessage) {
-	player1 := lobby.Players[0].Username
-	player2 := lobby.Players[1].Username
-	message1 := lobby.Players[0].ChatID
-	message2 := lobby.Players[1].ChatID
-	allmessage := lobby.Players
+func (g *Game) LevelFirst(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan GameMessage, userStates *map[int]models.UserState) {
+	player1 := lb.Players[0].Username
+	player2 := lb.Players[1].Username
+	message1 := lb.Players[0].ChatID
+	message2 := lb.Players[1].ChatID
+	allmessage := lb.Players
 	g.Pl1.Hp = 2
 	g.Pl2.Hp = 2
 	rand.Seed(time.Now().UnixNano())
@@ -54,6 +54,10 @@ func (g *Game) LevelFirst(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh ch
 					g.sendMessageToAll(bot, allmessage, message)
 					end := g.choice(bot, message2, messageCh, message1, allmessage)
 					if end {
+						if (*userStates)[lb.Players[0].UserID] == models.InGame {
+							(*userStates)[lb.Players[0].UserID] = models.InLobby
+							(*userStates)[lb.Players[1].UserID] = models.InLobby
+						}
 						return
 					}
 					break
@@ -72,6 +76,10 @@ func (g *Game) LevelFirst(bot *tgbotapi.BotAPI, lobby models.Lobby, messageCh ch
 					g.sendMessageToAll(bot, allmessage, message)
 					end := g.choice(bot, message1, messageCh, message2, allmessage)
 					if end {
+						if (*userStates)[lb.Players[0].UserID] == models.InGame {
+							(*userStates)[lb.Players[0].UserID] = models.InLobby
+							(*userStates)[lb.Players[1].UserID] = models.InLobby
+						}
 						return
 					}
 					break

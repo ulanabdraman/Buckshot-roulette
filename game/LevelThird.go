@@ -8,14 +8,14 @@ import (
 	"time"
 )
 
-func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan GameMessage, userStates *map[int]models.UserState) {
+func (g *Game) LevelThird(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan GameMessage, userStates *map[int]models.UserState) {
 	player1 := lb.Players[0].Username
 	player2 := lb.Players[1].Username
 	message1 := lb.Players[0].ChatID
 	message2 := lb.Players[1].ChatID
 	allmessage := lb.Players
-	g.Pl1.Hp = 4
-	g.Pl2.Hp = 4
+	g.Pl1.Hp = 5
+	g.Pl2.Hp = 5
 	rand.Seed(time.Now().UnixNano())
 	g.turn = rand.Intn(2)
 	g.Pl1.block = false
@@ -26,7 +26,7 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan
 
 	for {
 		g.damage = 1
-		g.distributeItems(2)
+		g.distributeItems(4)
 		totalBullets := rand.Intn(6) + 3
 		blankBullets := rand.Intn(totalBullets-1) + 1
 

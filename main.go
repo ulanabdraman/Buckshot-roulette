@@ -166,7 +166,7 @@ func main() {
 					UserStates[lb.Players[1].UserID] = models.InGame
 					var g game.Game
 					if lb.Level == 1 {
-						go g.LevelFirst(bot, playerLobby[userID], messageCh[i])
+						go g.LevelFirst(bot, playerLobby[userID], messageCh[i], &UserStates)
 					}
 					if lb.Level == 2 {
 						go g.LevelSecond(bot, playerLobby[userID], messageCh[i], &UserStates)
@@ -224,8 +224,8 @@ func main() {
 		if currentState == models.InGame {
 			if messageText == "/leavelobby" {
 				fmt.Println("Покидаем лобби...")
-				UserStates[userID] = models.Idle
 				lobby.DeletePlayerFromLobby(bot, playerLobby[userID], chatID, messageCh[lobby.Find(playerLobby[userID])])
+				UserStates[userID] = models.Idle
 				message := fmt.Sprintf("Вы покинули лобби")
 				replyMessage := tgbotapi.NewMessage(chatID, message)
 				bot.Send(replyMessage)

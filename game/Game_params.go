@@ -1,9 +1,10 @@
 package game
 
 type GamePlayer struct {
-	Hp    int
-	Items []string
-	block bool
+	Hp      int
+	Items   []string
+	block   bool
+	Hpblock bool
 }
 type GameMessage struct {
 	Message string

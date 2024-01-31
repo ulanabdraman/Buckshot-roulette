@@ -36,7 +36,7 @@ func (g *Game) showTable(bot *tgbotapi.BotAPI, chatID int64) {
 	g.sendMessage(bot, chatID, table)
 }
 
-func (g *Game) distributeItems() {
+func (g *Game) distributeItems(n int) {
 	availableItems := []string{
 		"Пиво",
 		"Сигареты",
@@ -47,7 +47,7 @@ func (g *Game) distributeItems() {
 
 	rand.Seed(time.Now().UnixNano())
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < n; i++ {
 		index1 := rand.Intn(len(availableItems))
 		index2 := rand.Intn(len(availableItems))
 
@@ -206,7 +206,6 @@ func (g *Game) choiceItems(bot *tgbotapi.BotAPI, chatID int64, messageCh chan Ga
 		case chat := <-messageCh:
 			if chat.Message == "/endgame" {
 				fmt.Println("Игра закончена")
-
 				return true
 			}
 			if chat.ChatID == chatID {

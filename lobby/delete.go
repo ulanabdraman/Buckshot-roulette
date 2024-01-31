@@ -14,7 +14,7 @@ func DeletePlayerFromLobby(bot *tgbotapi.BotAPI, lobby models.Lobby, chatID int6
 
 			playerIndex := -1
 
-			for j, player := range lobby.Players {
+			for j, player := range Lobbies[i].Players {
 				if player.ChatID == chatID {
 					playerIndex = j
 					break

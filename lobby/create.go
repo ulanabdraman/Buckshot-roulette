@@ -13,7 +13,7 @@ var Slots = make([]bool, 10)
 func LobbyCreate(bot *tgbotapi.BotAPI, chatID int64, level int, userID int, username string) models.Lobby {
 	var lobby models.Lobby
 	rand.Seed(time.Now().UnixNano())
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	const charset = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNOPQRSTUVWXYZ0123456789"
 	codeLength := 6
 
 	code := make([]byte, codeLength)
