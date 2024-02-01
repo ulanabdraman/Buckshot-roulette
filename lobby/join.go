@@ -27,6 +27,8 @@ func JoinLobby(chatID int64, bot *tgbotapi.BotAPI, code string, userID int, user
 				message := fmt.Sprintf("Лобби полное")
 				replyMessage := tgbotapi.NewMessage(chatID, message)
 				bot.Send(replyMessage)
+				var lb models.Lobby
+				return false, lb
 			}
 			if playerExists {
 				message := fmt.Sprintf("Игрок с UserID %d уже присутствует в лобби %s", userID, code)

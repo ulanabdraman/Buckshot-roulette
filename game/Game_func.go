@@ -174,7 +174,7 @@ func (g *Game) choice(bot *tgbotapi.BotAPI, chatID int64, messageCh chan GameMes
 }
 
 func (g *Game) drop() {
-	if len(g.BulletsOrder) > 0 {
+	if len(g.BulletsOrder) > 1 {
 		g.BulletsOrder = g.BulletsOrder[1:]
 		fmt.Println("Первый патрон удален")
 	} else {

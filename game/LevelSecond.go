@@ -4,6 +4,7 @@ import (
 	"Buckshot_Roulette/models"
 	"fmt"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -37,8 +38,21 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan
 		combatBullets := totalBullets - blankBullets
 
 		message = fmt.Sprintf("Холостых: %d \nБоевых: %d", blankBullets, combatBullets)
-		g.sendMessageToAll(bot, allmessage, message)
-
+		replyMessage := tgbotapi.NewMessage(message1, message)
+		sentMsg1, err := bot.Send(replyMessage)
+		replyMessage = tgbotapi.NewMessage(message2, message)
+		sentMsg2, err := bot.Send(replyMessage)
+		time.Sleep(5 * time.Second)
+		newMsg1 := tgbotapi.NewEditMessageText(message1, sentMsg1.MessageID, "Патроны больше не доступны")
+		_, err = bot.Send(newMsg1)
+		if err != nil {
+			log.Panic(err)
+		}
+		newMsg2 := tgbotapi.NewEditMessageText(message2, sentMsg2.MessageID, "Патроны больше не доступны")
+		_, err = bot.Send(newMsg2)
+		if err != nil {
+			log.Panic(err)
+		}
 		indices := rand.Perm(totalBullets)
 		OrderBullet := make([]string, totalBullets)
 
@@ -52,7 +66,11 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan
 		g.BulletsOrder = OrderBullet
 
 		for {
+			if len(g.BulletsOrder) == 0 {
+				break
+			}
 			g.turn++
+
 			if g.turn%2 == 0 {
 
 				if g.Pl2.block {
@@ -67,14 +85,13 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan
 				g.sendMessageToAll(bot, allmessage, message)
 				end := g.choiceItems(bot, message2, messageCh, message1, allmessage)
 				if end {
+					msg := "Вы можете ещё раз начать игру написав /startgame"
+					g.sendMessageToAll(bot, allmessage, msg)
 					if (*userStates)[lb.Players[0].UserID] == models.InGame {
 						(*userStates)[lb.Players[0].UserID] = models.InLobby
 						(*userStates)[lb.Players[1].UserID] = models.InLobby
 					}
 					return
-				}
-				if len(g.BulletsOrder) == 0 {
-					break
 				}
 
 			} else {
@@ -91,14 +108,13 @@ func (g *Game) LevelSecond(bot *tgbotapi.BotAPI, lb models.Lobby, messageCh chan
 				g.sendMessageToAll(bot, allmessage, message)
 				end := g.choiceItems(bot, message1, messageCh, message2, allmessage)
 				if end {
+					msg := "Вы можете ещё раз начать игру написав /startgame"
+					g.sendMessageToAll(bot, allmessage, msg)
 					if (*userStates)[lb.Players[0].UserID] == models.InGame {
 						(*userStates)[lb.Players[0].UserID] = models.InLobby
 						(*userStates)[lb.Players[1].UserID] = models.InLobby
 					}
 					return
-				}
-				if len(g.BulletsOrder) == 0 {
-					break
 				}
 
 			}
